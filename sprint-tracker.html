@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="titanium">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sprint Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,wght@6..144,1..1000&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="shared/css/design-tokens.css">
+
+<style>
+/* ── Sprint Tracker · prototype styles (built on PL-SHARED tokens) ───── */
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg-page);color:var(--text-primary);
+  font-family:var(--font-family-primary);font-size:var(--fontsize-body-md);
+  line-height:var(--line-height-body-md);font-weight:var(--font-weight-book);-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--border-focus);outline-offset:2px;border-radius:var(--border-radius-sm)}
+.lbl{font-size:var(--fontsize-label);line-height:var(--line-height-label);letter-spacing:.08em;
+  text-transform:uppercase;color:var(--text-tertiary);font-weight:var(--font-weight-semibold)}
+.mono{font-family:var(--font-family-mono);font-variant-numeric:tabular-nums}
+
+/* shell */
+.app{display:flex;flex-direction:column;min-height:100vh}
+.topnav{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:var(--scale-600);
+  padding:var(--scale-300) var(--scale-600);border-bottom:1px solid var(--border-tertiary);
+  background:var(--bg-surface);position:sticky;top:0;z-index:6}
+.topnav .spacer:last-of-type{display:flex;justify-content:flex-end}
+.nav{display:flex;align-items:center;gap:2px}
+.nav button{display:flex;align-items:center;gap:var(--scale-200);padding:var(--scale-200) var(--scale-400);
+  border-radius:var(--border-radius-md);color:var(--text-secondary);text-align:left}
+.nav button:hover{background:var(--bg-muted);color:var(--text-primary)}
+.nav button[aria-current="true"]{background:var(--interactive-bg-subtle);color:var(--text-interactive);
+  font-weight:var(--font-weight-semibold)}
+.nav .n{font-family:var(--font-family-mono);font-size:var(--fontsize-body-sm);color:var(--text-tertiary)}
+.av{width:24px;height:24px;border-radius:var(--border-radius-full);background:var(--interactive-bg-subtle);
+  color:var(--text-interactive);display:grid;place-items:center;font-size:var(--fontsize-label);
+  font-weight:var(--font-weight-semibold);flex:none;border:1px solid var(--status-info-border)}
+.av.sm{width:22px;height:22px;font-size:9px}
+.av.ghost{background:var(--bg-surface);color:var(--text-tertiary);border:1px dashed var(--border-subtle)}
+.av.ghost:hover{border-color:var(--interactive-default);color:var(--text-interactive)}
+
+main{min-width:0;display:flex;flex-direction:column;flex:1}
+.spacer{flex:1}
+.view{padding:var(--scale-600);margin:0 auto;width:var(--container-workspace)}
+
+/* product tags */
+.ptags{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.ptag{display:inline-flex;align-items:center;height:24px;gap:6px;border:1px solid var(--border-tertiary);
+  border-radius:var(--border-radius-full);padding:0 6px 0 10px;font-size:var(--fontsize-body-sm);line-height:1;
+  background:var(--interactive-bg-subtle);color:var(--text-interactive);white-space:nowrap}
+.ptag .x{opacity:.5;font-size:12px;line-height:1;width:16px;height:16px;flex:none;
+  display:inline-flex;align-items:center;justify-content:center;border-radius:var(--border-radius-full);padding:0}
+.ptag .x:not(:disabled):hover{opacity:1;color:var(--status-error-border);background:rgba(0,0,0,.06)}
+.ptag .x:disabled{cursor:not-allowed}
+.ptagpick{display:flex;gap:var(--scale-100);flex-wrap:wrap;align-items:center;margin-top:6px}
+.ptagpick button{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border-tertiary);
+  border-radius:var(--border-radius-full);padding:2px var(--scale-300);font-size:var(--fontsize-body-sm);background:var(--bg-surface)}
+.ptagpick button:hover{border-color:var(--interactive-default);color:var(--text-interactive)}
+.swatch{width:9px;height:9px;border-radius:var(--border-radius-full);flex:none;display:inline-block}
+
+/* products tab */
+.prodcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:var(--scale-400)}
+.prodcard{position:relative;cursor:pointer;display:flex;flex-direction:column;gap:var(--scale-300);
+  border:1px solid var(--border-tertiary);border-radius:var(--border-radius-lg);
+  padding:var(--scale-400);background:var(--bg-surface)}
+.prodcard:hover{border-color:var(--interactive-default)}
+.prodcard-head{display:flex;align-items:center;gap:var(--scale-200)}
+.prodswatchwrap{position:relative;flex:none}
+.prodswatch{width:22px;height:22px;border-radius:var(--border-radius-full);border:2px solid var(--bg-surface);
+  box-shadow:0 0 0 1px var(--border-tertiary);flex:none;cursor:pointer}
+.prodswatch:hover{box-shadow:0 0 0 1px var(--border-default)}
+.prodname{flex:1;min-width:0;font-size:var(--fontsize-body-md);font-weight:var(--font-weight-medium)}
+.prodcard-stats{display:grid;grid-template-columns:1fr 1fr;gap:var(--scale-300)}
+.statbox{border:1px solid var(--border-tertiary);border-radius:var(--border-radius-md);
+  padding:var(--scale-300);text-align:center}
+.statbox .num{font-family:var(--font-family-mono);font-size:28px;font-weight:var(--font-weight-semibold);line-height:1}
+.statbox .lbl{margin-top:4px}
+.recentbox{border:1px solid var(--border-tertiary);border-radius:var(--border-radius-md);padding:var(--scale-300)}
+.recentbox .lbl{margin-bottom:4px}
+.recentbox .rname{font-size:var(--fontsize-body-sm);font-weight:var(--font-weight-medium)}
+.recentbox .rname.linkish:hover{color:var(--text-interactive)}
+.prodpage-head{display:flex;align-items:center;gap:var(--scale-300);margin-bottom:var(--scale-200)}
+.prodpage-list{display:flex;flex-direction:column;gap:var(--scale-200);padding:var(--scale-400)}
+.prodpage-feat{display:flex;align-items:center;gap:var(--scale-300);width:100%;text-align:left;
+  padding:var(--scale-300) var(--scale-400);border:1px solid var(--border-tertiary);
+  border-radius:var(--border-radius-lg);background:var(--bg-surface)}
+.prodpage-feat:hover{border-color:var(--interactive-default);color:var(--text-interactive)}
+.prodpage-feat .name{flex:1;font-weight:var(--font-weight-medium)}
+.colorpick{position:absolute;top:calc(100% + 6px);left:0;z-index:8;display:flex;gap:6px;
+  padding:var(--scale-200);background:var(--bg-surface);border:1px solid var(--border-tertiary);
+  border-radius:var(--border-radius-md);box-shadow:0 8px 20px rgba(0,0,0,.12)}
+.colorswatch{width:22px;height:22px;border-radius:var(--border-radius-full);border:2px solid transparent;cursor:pointer}
+.colorswatch:hover{border-color:var(--border-default)}
+.colorswatch.on{border-color:var(--text-primary)}
+
+/* board */
+.board{display:grid;grid-template-columns:repeat(5,minmax(200px,1fr));gap:var(--scale-300);align-items:start}
+.col{background:var(--bg-muted);border:1px solid var(--border-tertiary);border-radius:var(--border-radius-lg);
+  padding:var(--scale-200);min-height:200px;transition:border-color .15s,background .15s}
+.col.drop{border-color:var(--interactive-default);background:var(--interactive-bg-subtle)}
+.colhead{display:flex;align-items:center;gap:var(--scale-200);padding:var(--scale-100) var(--scale-200) var(--scale-300)}
+.dot{width:8px;height:8px;border-radius:var(--border-radius-full);flex:none}
+.colhead .c{margin-right:auto;font-family:var(--font-family-mono);font-size:var(--fontsize-body-sm);color:var(--text-tertiary)}
+.colhead-add{width:20px;height:20px;border-radius:var(--border-radius-sm);color:var(--text-tertiary);
+  display:grid;place-items:center;font-size:14px;line-height:1;flex:none}
+.colhead-add:hover{background:var(--bg-subtle);color:var(--text-interactive)}
+.cards{display:flex;flex-direction:column;gap:var(--scale-200)}
+.card{background:var(--bg-surface);border:1px solid var(--border-tertiary);border-radius:var(--border-radius-md);
+  padding:var(--scale-300) var(--scale-300) var(--scale-400);text-align:left;width:100%;display:flex;
+  flex-direction:column;gap:6px;cursor:grab;transition:transform .12s ease,border-color .12s,box-shadow .12s}
+.card:hover{border-color:var(--border-default);transform:translateY(-1px);box-shadow:0 4px 12px var(--overlay-panel)}
+.card.dragging{opacity:.4}
+.card h3{margin:0;font-size:var(--fontsize-body-lg);line-height:1.3;
+  font-weight:var(--font-weight-bold);letter-spacing:-.015em;color:var(--text-primary)}
+.card .ptags{margin-bottom:2px}
+.cardprog{display:flex;align-items:center;gap:var(--scale-200)}
+.cardprog .bar{flex:1}
+.cardprog-n{font-size:10px;color:var(--text-tertiary);flex:none}
+.pill{display:inline-flex;align-items:center;padding:0 var(--scale-200);border-radius:var(--border-radius-full);
+  gap:3px;font-size:var(--fontsize-body-sm);background:var(--status-neutral-bg);color:var(--text-primary);
+  border:.5px solid var(--status-neutral-border);white-space:nowrap}
+.pill-err{background:var(--status-error-bg);border-color:var(--status-error-border)}
+.pill-warn{background:var(--status-warning-bg);border-color:var(--status-warning-border)}
+.pill-ok{background:var(--status-success-bg);border-color:var(--status-success-border)}
+.pill-info{background:var(--status-info-bg);border-color:var(--status-info-border)}
+.bar{height:4px;border-radius:var(--border-radius-full);background:var(--bg-subtle);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--interactive-default)}
+
+/* generic panel */
+.panel{background:var(--bg-surface);border:1px solid var(--border-tertiary);border-radius:var(--border-radius-lg)}
+.phead{display:flex;align-items:center;gap:var(--scale-200);padding:var(--scale-300) var(--scale-400);
+  border-bottom:1px solid var(--border-tertiary);background:var(--bg-muted);
+  border-radius:var(--border-radius-lg) var(--border-radius-lg) 0 0}
+.phead h3{margin:0;font-size:var(--fontsize-body-md);line-height:var(--line-height-body-md);font-weight:var(--font-weight-semibold)}
+.phead .c{margin-left:auto}
+.phead .actions{margin-left:auto;display:flex;gap:var(--scale-200);align-items:center}
+.stack{display:flex;flex-direction:column;flex:1;gap:var(--scale-600)}
+
+/* buttons (fall back if tokens.css not yet present) */
+.btn-secondary{background:var(--bg-surface);color:var(--interactive-default);border:1px solid var(--interactive-default);
+  border-radius:var(--border-radius-full);padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;
+  letter-spacing:.03em;display:inline-flex;align-items:center;gap:6px;height:fit-content}
+.btn-secondary:hover{background-color:var(--interactive-bg-subtle)}
+.btn-secondary.sm{padding:4px 10px;font-size:11px}
+.btn-ghost{font-weight:var(--font-weight-semibold);border:1px solid transparent;background:none;
+  color:var(--text-tertiary);padding:8px 12px;font-size:var(--fontsize-body-sm);gap:8px;display:flex;align-items:center}
+.btn-ghost:hover{cursor:pointer;opacity:.8}
+
+/* inline "add" affordance: button collapses into an input + save/cancel */
+.addslot{padding:var(--scale-300) var(--scale-400)}
+.addtrigger{color:var(--text-tertiary);font-size:var(--fontsize-body-sm);display:flex;align-items:center;gap:6px;
+  padding:var(--scale-100) 0}
+.addtrigger:hover{color:var(--text-interactive)}
+.addtrigger .plus{width:16px;height:16px;border-radius:var(--border-radius-full);border:1px solid currentColor;
+  display:grid;place-items:center;font-size:12px;line-height:1;flex:none}
+.addform{display:flex;gap:var(--scale-200);align-items:center}
+.addform input{flex:1;border:1px solid var(--border-focus);border-radius:var(--border-radius-md);
+  padding:var(--scale-200) var(--scale-300);background:var(--bg-surface);font-size:var(--fontsize-body-sm);outline:none;
+  box-shadow:0 0 0 3px var(--interactive-bg-subtle)}
+.addform select{border:1px solid var(--border-tertiary);border-radius:var(--border-radius-md);
+  padding:var(--scale-200) var(--scale-300);background:var(--bg-surface);font-size:var(--fontsize-body-sm);
+  color:var(--text-primary);max-width:160px}
+
+/* task rows */
+.row{display:flex;align-items:flex-start;gap:var(--scale-300);padding:var(--scale-300) var(--scale-400);
+  border-bottom:1px solid var(--border-tertiary)}
+.row:last-child{border-bottom:none}
+.tasksub{border-top:1px solid var(--border-tertiary)}
+.tasksub:first-child{border-top:none}
+.tasksub-head{display:flex;align-items:center;justify-content:space-between;gap:var(--scale-300);
+  padding:var(--scale-300) var(--scale-400) var(--scale-100)}
+.row:hover{background:var(--bg-muted)}
+.row:hover .del{opacity:1}
+.chk{width:16px;height:16px;border:1.5px solid var(--border-default);border-radius:var(--border-radius-sm);
+  flex:none;margin-top:2px;display:grid;place-items:center;background:var(--bg-surface)}
+.chk:hover{border-color:var(--interactive-default)}
+.chk[aria-checked="true"]{background:var(--interactive-default);border-color:var(--interactive-default)}
+.chk[aria-checked="true"]::after{content:"";width:7px;height:4px;border-left:1.5px solid var(--color-white);
+  border-bottom:1.5px solid var(--color-white);transform:rotate(-45deg) translate(1px,-1px)}
+.t{flex:1;min-width:0}
+.done .t>.txt{color:var(--text-tertiary);text-decoration:line-through}
+.sub{color:var(--text-tertiary);font-size:var(--fontsize-body-sm);line-height:var(--line-height-body-sm);margin-top:2px}
+.del{opacity:0;color:var(--text-tertiary);font-size:var(--fontsize-body-lg);line-height:1;padding:0 var(--scale-100);flex:none}
+.del:hover{color:var(--status-error-border)}
+.txt{outline:none;border-radius:var(--border-radius-sm);padding:1px 3px;margin:-1px -3px;cursor:text}
+.txt:hover{background:var(--bg-subtle)}
+.txt:focus{background:var(--bg-surface);box-shadow:0 0 0 2px var(--border-focus)}
+
+/* shared-roster header (avatars that apply to the whole list) */
+.roster{display:flex;align-items:center;gap:6px}
+.roster .av{cursor:default}
+
+/* story rows: N checkboxes, one per roster member, aligned to header avatars */
+.storyrow{position:relative;display:flex;align-items:center;gap:var(--scale-300);
+  padding:var(--scale-300) var(--scale-1000) var(--scale-300) var(--scale-400);
+  border-bottom:1px solid var(--border-tertiary)}
+.storyrow .del{position:absolute;top:50%;right:var(--scale-300);transform:translateY(-50%)}
+.rosterbtn{position:absolute;top:50%;right:var(--scale-300);transform:translateY(-50%)}
+.storyrow:last-child{border-bottom:none}
+.storyrow:hover{background:var(--bg-muted)}
+.storyrow:hover .del{opacity:1}
+.storyrow .t{display:flex;flex-direction:column;gap:2px}
+.storychecks{display:flex;gap:6px;flex:none}
+.storychecks .chk{margin-top:0;width:22px;height:22px;border-radius:var(--border-radius-full)}
+.minwarn{font-size:var(--fontsize-body-sm);color:var(--status-warning-border);padding:0 var(--scale-400) var(--scale-200)}
+
+/* feature page */
+.fpage{display:flex;flex-direction:column;gap:var(--scale-600);max-width:var(--container-workspace)}
+.fhead{border:1px solid var(--border-tertiary);border-radius:var(--border-radius-lg);background:var(--bg-surface);
+  padding:var(--scale-500)}
+.fhead-top{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--scale-400)}
+.ftitle{font-size:var(--fontsize-heading-h5);line-height:var(--line-height-heading-h5);
+  font-weight:var(--font-weight-bold);letter-spacing:-.02em;margin:0;text-wrap:balance}
+.fhead-prog{display:flex;align-items:center;gap:var(--scale-300);margin-top:var(--scale-400)}
+.fhead-prog .bar{flex:1}
+.problem-text{font-size:var(--fontsize-body-md);line-height:var(--line-height-body-md);max-width:66ch;
+  color:var(--text-secondary);margin:0}
+.reslinks{display:flex;flex-wrap:wrap;gap:var(--scale-300);margin-top:var(--scale-300)}
+.reslink{display:inline-flex;align-items:center;gap:4px;font-size:var(--fontsize-body-sm);
+  color:var(--text-interactive);text-decoration:none}
+.reslink:hover{text-decoration:underline;text-underline-offset:2px}
+.reslink-arrow{font-size:11px;opacity:.7}
+.reslist{display:flex;flex-direction:column}
+.resrow{display:flex;align-items:center;gap:var(--scale-300);padding:var(--scale-200) 0;
+  border-bottom:1px solid var(--border-tertiary)}
+.resrow:last-child{border-bottom:none}
+.reslink-name{color:var(--text-primary);font-size:var(--fontsize-body-sm);font-weight:var(--font-weight-medium);
+  text-decoration:none}
+.reslink-name:hover{color:var(--text-interactive)}
+.resurl{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  color:var(--text-tertiary);font-size:var(--fontsize-body-sm)}
+.empty{color:var(--text-tertiary);font-size:var(--fontsize-body-sm);padding:var(--scale-400)}
+.showdone{display:flex;align-items:center;gap:6px;font-size:var(--fontsize-body-sm);color:var(--text-tertiary);margin-left:auto}
+.showdone:hover{color:var(--text-interactive)}
+.showdone .chk{width:14px;height:14px;margin-top:0}
+/* per-task assignee: avatar badge + a search/checklist popover, used for every task assignment */
+.assignwrap{position:relative;flex:none}
+.assignpick{position:absolute;top:calc(100% + 6px);right:0;z-index:8;width:220px;
+  background:var(--bg-surface);border:1px solid var(--border-tertiary);border-radius:var(--border-radius-md);
+  box-shadow:0 8px 20px rgba(0,0,0,.12);padding:var(--scale-300)}
+.assignsearch{width:100%;border:1px solid var(--border-tertiary);border-radius:var(--border-radius-md);
+  padding:var(--scale-200) var(--scale-300);background:var(--bg-page);font-size:var(--fontsize-body-sm);
+  color:var(--text-primary);outline:none}
+.assignsearch:focus{border-color:var(--border-focus);box-shadow:0 0 0 3px var(--interactive-bg-subtle)}
+.assignlist{display:flex;flex-direction:column;margin-top:var(--scale-200)}
+.assignrow{display:flex;align-items:center;gap:var(--scale-300);padding:var(--scale-200) var(--scale-100);
+  border-radius:var(--border-radius-md);font-size:var(--fontsize-body-md);color:var(--text-primary)}
+.assignrow:hover{background:var(--bg-muted)}
+.assignrow .cb{width:18px;height:18px;flex:none;border:1.5px solid var(--border-default);
+  border-radius:var(--border-radius-sm);display:grid;place-items:center}
+.assignrow.on .cb{background:var(--interactive-default);border-color:var(--interactive-default)}
+.assignrow.on .cb::after{content:"";width:7px;height:4px;border-left:1.5px solid var(--color-white);
+  border-bottom:1.5px solid var(--color-white);transform:rotate(-45deg) translate(1px,-1px)}
+.assignrow:disabled{cursor:not-allowed;opacity:.5}
+.assignrow:disabled:hover{background:none}
+
+.linkish{text-align:left}
+.linkish:hover{color:var(--text-interactive);text-decoration:underline;text-underline-offset:2px}
+
+/* edit-feature modal */
+.modal-scrim{position:fixed;inset:0;background:var(--overlay-panel);background:rgba(0,0,0,.35);
+  display:flex;align-items:center;justify-content:center;padding:var(--scale-500);z-index:20}
+.modal{background:var(--bg-surface);border-radius:var(--border-radius-lg);border:1px solid var(--border-tertiary);
+  width:min(480px,100%);max-height:86vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:var(--scale-400) var(--scale-500);
+  border-bottom:1px solid var(--border-tertiary)}
+.modal-head h3{margin:0;font-size:var(--fontsize-body-lg);font-weight:var(--font-weight-semibold)}
+.modal-body{padding:var(--scale-500);overflow-y:auto;display:flex;flex-direction:column}
+.modal-body .lbl{display:block;margin-bottom:6px}
+.modalinput{width:100%;border:1px solid var(--border-tertiary);border-radius:var(--border-radius-md);
+  padding:var(--scale-200) var(--scale-300);background:var(--bg-muted);font-size:var(--fontsize-body-md);outline:none}
+.modalinput:focus{border-color:var(--border-focus);background:var(--bg-surface);box-shadow:0 0 0 3px var(--interactive-bg-subtle)}
+textarea.modalinput{min-height:100px;resize:vertical;line-height:var(--line-height-body-md);max-width:none}
+.stepper{display:flex;gap:var(--scale-100);flex-wrap:wrap}
+.stepper button{border:1px solid var(--border-tertiary);border-radius:var(--border-radius-full);
+  padding:var(--scale-100) var(--scale-400);font-size:var(--fontsize-body-sm);color:var(--text-tertiary);background:var(--bg-surface)}
+.stepper button:hover{border-color:var(--interactive-default);color:var(--text-interactive)}
+.stepper button[aria-pressed="true"]{background:var(--bg-inverse);color:var(--text-on-dark);
+  border-color:var(--bg-inverse);font-weight:var(--font-weight-semibold)}
+.modal-danger{margin-top:var(--scale-600);padding-top:var(--scale-400);border-top:1px solid var(--border-tertiary)}
+.modal-foot{padding:var(--scale-400) var(--scale-500);border-top:1px solid var(--border-tertiary);
+  display:flex;justify-content:flex-end}
+
+@media (max-width:900px){
+  .topnav{grid-template-columns:1fr;justify-items:center;gap:var(--scale-300)}
+  .topnav .spacer{display:none}
+  .board{display:flex;overflow-x:auto}.col{min-width:230px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="topnav">
+    <div class="spacer"></div>
+    <nav class="nav" id="nav">
+      <button data-v="products">Products</button>
+      <button data-v="board">Features</button>
+      <button data-v="mine">Tasks <span class="n" id="mineCount"></span></button>
+    </nav>
+    <div class="spacer" style="gap:var(--scale-200)">
+      <button class="btn-secondary" id="addProduct">+ Add product</button>
+      <button class="btn-secondary" id="addFeature">+ New feature</button>
+    </div>
+  </div>
+
+  <main>
+    <div class="view" id="view"></div>
+  </main>
+</div>
+
+<script>
+/* ── model ─────────────────────────────────────────────────── */
+const STAGES=[["backlog","Backlog"],["design","Design"],["dev","Development"],["test","Test"],["release","Release"]];
+const STAGE_COLOR={backlog:"var(--text-tertiary)",design:"var(--interactive-default)",
+  dev:"var(--accent-default)",test:"var(--status-info-border)",release:"var(--status-success-border)"};
+const ME="hp";
+const PEOPLE={hp:"Healey P.",jr:"Jordan R.",am:"Ava M.",dt:"Dev T.",ks:"Kara S."};
+/* the six data-color families defined in PL-SHARED's design-tokens.css */
+const DATACOLORS=["cherry","orange","lemon","mint","blueberry","grape"];
+let PRODUCTS=[
+  {id:"pr1",name:"Cleveland Menu OS",color:"blueberry"},
+  {id:"pr2",name:"Platinum",color:"grape"},
+  {id:"pr3",name:"MenuMaker",color:"mint"},
+];
+const productByName=n=>PRODUCTS.find(p=>p.name===n);
+const pillStyle=color=>color
+  ?`background:var(--datacolor-${color}-00);border-color:var(--datacolor-${color}-02);color:var(--datacolor-${color}-06)`
+  :"";
+const productPill=name=>{const p=productByName(name);
+  return `<span class="pill ptagged" style="${pillStyle(p&&p.color)}">${esc(name)}</span>`;};
+const ini=k=>(PEOPLE[k]||"?").split(" ").map(s=>s[0]).join("");
+let seq=100; const uid=p=>p+(++seq);
+
+/* a story: one text + one done-map keyed by roster member id.
+   the roster (who the checkboxes are for) is shared across the WHOLE stories list on a feature — min 3.
+   a feature can belong to more than one product (products: []). */
+let F=[
+{id:"f1",products:["Cleveland Menu OS"],name:"Menu proofing queue",stage:"dev",
+ problem:"Proofs bounce between email threads and Dropbox, so nobody can say which round a menu is on. Client-mandated style rules get caught late, at press cost.",
+ resources:[{id:uid("r"),label:"Figma comps",url:"#"},{id:uid("r"),label:"Proofing flow doc",url:"#"}],
+ storyRoster:["am","dt","hp"],
+ stories:[
+  {id:uid("u"),cat:"Reviewer",t:"As a proofreader I can see every menu waiting on me, oldest first",done:{am:1,dt:1,hp:1}},
+  {id:uid("u"),cat:"Reviewer",t:"As a proofreader I can flag a line as an AP Style issue and attach the rule",done:{am:1,dt:0,hp:0}},
+  {id:uid("u"),cat:"Account",t:"As an account manager I can see which round each proof is on",done:{am:1,dt:1,hp:0}}],
+ bugs:[
+  {id:uid("b"),cat:"Blocker",t:"Round counter resets when a proof is reassigned",a:"dt"},
+  {id:uid("b"),cat:"Visual",t:"Long dish names clip in the queue row on 13-inch screens",a:"am"}],
+ proto:[{id:uid("p"),cat:"Interaction",t:"Annotate hover states on the markup toolbar",a:"am"}]},
+
+{id:"f2",products:["Cleveland Menu OS","Platinum"],name:"Client brand mandates library",stage:"design",
+ problem:"Every property has its own mandates — Omni's capitalization, Boyd's advisory wording. They live in people's heads and in three stale PDFs.",
+ resources:[{id:uid("r"),label:"Figma comps",url:"#"}],
+ storyRoster:["am","dt","ks"],
+ stories:[
+  {id:uid("u"),cat:"Editor",t:"As an editor I can add a mandate and scope it to a property",done:{am:1,dt:0,ks:0}},
+  {id:uid("u"),cat:"Reviewer",t:"As a proofreader I see applicable mandates beside the proof",done:{am:0,dt:0,ks:0}}],
+ bugs:[],
+ proto:[{id:uid("p"),cat:"Layout",t:"Test two-column vs. accordion layout for long mandate sets",a:"am",done:true}]},
+
+{id:"f3",products:["Cleveland Menu OS"],name:"Consumer advisory checker",stage:"test",
+ problem:"Advisory and Prop 65 language varies by state and gets copied from the wrong template. A missed advisory is a legal exposure, not a typo.",
+ resources:[{id:uid("r"),label:"Figma comps",url:"#"}],
+ storyRoster:["am","dt","hp"],
+ stories:[
+  {id:uid("u"),cat:"Reviewer",t:"As a proofreader I get a warning when required advisory text is missing",done:{am:1,dt:1,hp:1}},
+  {id:uid("u"),cat:"Admin",t:"As an admin I can map a property to its state ruleset",done:{am:1,dt:1,hp:0}}],
+ bugs:[{id:uid("b"),cat:"Blocker",t:"California Prop 65 rule fires on non-CA properties",a:"dt"}],
+ proto:[]},
+
+{id:"f4",products:["Cleveland Menu OS","MenuMaker"],name:"Press-ready export",stage:"backlog",
+ problem:"Final files are assembled by hand and mislabeled versions reach the printer.",
+ resources:[],
+ storyRoster:["am","dt","jr"],
+ stories:[
+  {id:uid("u"),cat:"Production",t:"As production I can export an approved proof with bleed and crop marks",done:{am:0,dt:0,jr:0}},
+  {id:uid("u"),cat:"Production",t:"As production I can lock a proof once it exports",done:{am:0,dt:0,jr:0}}],
+ bugs:[],proto:[]},
+
+{id:"f5",products:["MenuMaker"],name:"LTO calendar",stage:"backlog",
+ problem:"Limited-time offers are tracked in a spreadsheet, so print deadlines are discovered a week late.",
+ resources:[],
+ storyRoster:["am","dt","hp"],
+ stories:[{id:uid("u"),cat:"Planning",t:"As a planner I can see LTO drop dates against print lead times",done:{am:0,dt:0,hp:0}}],
+ bugs:[],proto:[]},
+
+{id:"f6",products:["Cleveland Menu OS","Platinum","MenuMaker"],name:"Version history",stage:"release",
+ problem:"Teams need to prove what changed between round three and round four.",
+ resources:[{id:uid("r"),label:"Diff view comp",url:"#"}],
+ storyRoster:["am","dt","hp"],
+ stories:[{id:uid("u"),cat:"Reviewer",t:"As a proofreader I can diff two rounds of a menu",done:{am:1,dt:1,hp:1}}],
+ bugs:[{id:uid("b"),cat:"Visual",t:"Diff highlight color fails contrast in dark mode",a:"am",done:true}],
+ proto:[]},
+];
+
+/* ── helpers ───────────────────────────────────────────────── */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&lt;",">":"&gt;",'"':"&quot;","&":"&amp;"}[c]||c));
+const stageName=id=>(STAGES.find(s=>s[0]===id)||[,"—"])[1];
+const feat=id=>F.find(f=>f.id===id);
+function counts(f){
+  let done=0,total=0;
+  f.stories.forEach(s=>f.storyRoster.forEach(k=>{total++;if(s.done[k])done++;}));
+  f.bugs.concat(f.proto).forEach(t=>{total++;if(t.done)done++;});
+  return{done,total};
+}
+const prog=f=>{const c=counts(f);return c.total?Math.round(c.done/c.total*100):0};
+function myWork(){
+  const out=[];
+  F.forEach(f=>{
+    if(f.storyRoster.includes(ME))f.stories.forEach(s=>out.push({f,kind:"story",item:s}));
+    f.bugs.forEach(t=>{if(t.a===ME)out.push({f,kind:"bug",item:t})});
+    f.proto.forEach(t=>{if(t.a===ME)out.push({f,kind:"proto",item:t})});
+  });
+  return out;
+}
+const isDone=(f,k,x)=>k==="story"?!!x.done[ME]:!!x.done;
+
+let view="board", openId=null, openProduct=null;
+/* which "add" affordance is currently expanded, e.g. "story:f1" or "comp:f2" or "pers:" */
+let addingKey=null;
+/* which feature's roster-picker is open */
+let pickingRoster=null;
+/* which feature's product-picker is open */
+let pickingProd=null;
+/* which product's color swatch-picker is open, on the Products tab */
+let pickingColor=null;
+/* which task's assignee popover is open, e.g. "f1:proto:p2" */
+let pickingTaskAssign=null;
+/* current text in the assignee-popover search box */
+let assignSearch="";
+/* task lists (keyed e.g. "proto:f1", "bug:f1", "mine:f1:proto") whose completed items are expanded */
+const expandedDone=new Set();
+/* whether the add-resource mini-form is open in the edit-feature modal */
+let addingResource=false;
+/* which feature's "edit feature" modal is open */
+let editingFeature=null;
+/* which product's "edit product" modal is open */
+let editingProduct=null;
+
+/* ── render ────────────────────────────────────────────────── */
+function render(){
+  $("#mineCount").textContent=myWork().filter(w=>w.f.stage!=="release"&&!isDone(w.f,w.kind,w.item)).length;
+  document.querySelectorAll("#nav button").forEach(b=>b.setAttribute("aria-current",!openId&&b.dataset.v===view));
+  const v=$("#view");
+  const body=openId?featurePage(feat(openId))
+    :openProduct?productPage(PRODUCTS.find(p=>p.id===openProduct))
+    :{products:productsView,board:board,mine:myTasks}[view]();
+  v.innerHTML=body;
+  wire();
+}
+
+/* board */
+function board(){
+  return `<div class="board">`+STAGES.map(([id,name])=>{
+    const list=F.filter(f=>f.stage===id);
+    return `<section class="col" data-stage="${id}">
+      <div class="colhead"><span class="dot" style="background:${STAGE_COLOR[id]}"></span>
+        <span class="lbl" style="color:var(--text-secondary)">${name}</span><span class="c">${list.length}</span>
+        <button class="colhead-add" data-newfeat="${id}" aria-label="Add feature to ${esc(name)}" title="Add feature">+</button></div>
+      <div class="cards">${list.map(cardHTML).join("")}</div>
+    </section>`;}).join("")+`</div>`;
+}
+function cardHTML(f){
+  return `<button class="card" draggable="true" data-open="${f.id}">
+    <h3>${esc(f.name)}</h3>
+    <div class="ptags">${f.products.map(productPill).join("")}</div>
+    <div class="cardprog"><div class="bar"><i style="width:${prog(f)}%"></i></div><span class="cardprog-n mono">${prog(f)}%</span></div>
+  </button>`;
+}
+
+/* ── add-in-place: a button that reveals an input, saves, collapses ── */
+function addSlot(key,placeholder,btnLabel){
+  if(addingKey===key){
+    return `<div class="addslot"><div class="addform">
+      <input autofocus placeholder="${esc(placeholder)}" data-addinput="${key}">
+      <button class="btn-secondary sm" data-addsave="${key}">Save</button>
+      <button class="btn-ghost" data-addcancel style="padding:4px 8px">Cancel</button>
+    </div></div>`;
+  }
+  return `<div class="addslot"><button class="addtrigger" data-addopen="${key}">
+    <span class="plus">+</span>${esc(btnLabel)}</button></div>`;
+}
+
+/* add-in-place variant for My Tasks: scoped to one feature + kind, no feature picker needed.
+   Split in two so the trigger can sit inline in the sub-list header, with the input form
+   dropping below the rows only once it's open. */
+function mineAddTrigger(kind,fid){
+  const key=`mineadd:${kind}:${fid}`;
+  if(addingKey===key)return"";
+  return `<button class="addtrigger" data-addopen="${key}"><span class="plus">+</span>Add Task</button>`;
+}
+function mineAddForm(kind,fid,placeholder){
+  const key=`mineadd:${kind}:${fid}`;
+  if(addingKey!==key)return"";
+  return `<div class="addslot"><div class="addform">
+    <input autofocus placeholder="${esc(placeholder)}" data-addinput="${key}">
+    <button class="btn-secondary sm" data-addsave="${key}">Save</button>
+    <button class="btn-ghost" data-addcancel style="padding:4px 8px">Cancel</button>
+  </div></div>`;
+}
+
+/* feature page */
+function featurePage(f){
+  return `<div class="fpage">
+    <section class="fhead">
+      <div class="fhead-top">
+        <div>
+          <h2 class="ftitle">${esc(f.name)}</h2>
+          <div class="ptags" style="margin-top:8px">
+            <span class="pill" style="background:var(--bg-muted)"><span class="dot" style="background:${STAGE_COLOR[f.stage]}"></span> ${stageName(f.stage)}</span>
+            ${f.products.map(productPill).join("")}
+          </div>
+        </div>
+        <button class="btn-secondary sm" data-editfeat="${f.id}">Edit</button>
+      </div>
+      <p class="problem-text" style="margin-top:var(--scale-400)">${f.problem?esc(f.problem):'<span class="empty" style="padding:0">No problem statement yet.</span>'}</p>
+      ${f.resources.length?`<div class="reslinks">${f.resources.map(r=>`<a class="reslink" href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.label)} <span class="reslink-arrow">↗</span></a>`).join("")}</div>`:""}
+      <div class="fhead-prog"><div class="bar"><i style="width:${prog(f)}%"></i></div><span class="mono">${prog(f)}%</span></div>
+    </section>
+
+    <div class="stack">
+      <section class="panel">
+        <div class="phead"><h3>Design</h3><span class="lbl c">${f.proto.filter(t=>!t.done).length} open</span>
+          ${doneToggle(`proto:${f.id}`,f.proto.filter(t=>t.done).length)}</div>
+        ${f.proto.length
+          ? renderTaskGroup(`proto:${f.id}`, f.proto.filter(t=>!t.done).map(t=>taskRow(f,"proto",t)), f.proto.filter(t=>t.done).map(t=>taskRow(f,"proto",t)))
+          : `<div class="empty">No design tasks yet.</div>`}
+        ${addSlot("proto:"+f.id,"Describe a design task…","Add a design task")}
+      </section>
+
+      <section class="panel">
+        <div class="phead" style="position:relative;padding-right:var(--scale-1000)"><h3>User stories</h3>
+          <div class="actions">
+            <span class="roster">${f.storyRoster.map(k=>`<span class="av sm" title="${PEOPLE[k]}">${ini(k)}</span>`).join("")}</span>
+          </div>
+          <button class="av sm ghost rosterbtn" data-rosterpick="${f.id}" title="Manage assignees">+</button>
+          ${pickingRoster===f.id?rosterPickHTML(f):""}
+        </div>
+        ${f.stories.length?f.stories.map(s=>storyRow(f,s)).join(""):`<div class="empty">No stories yet.</div>`}
+        ${addSlot("story:"+f.id,"As a … I can …","Add a story")}
+      </section>
+
+      <section class="panel">
+        <div class="phead"><h3>Bug tracker</h3><span class="lbl c">${f.bugs.filter(b=>!b.done).length} open</span>
+          ${doneToggle(`bug:${f.id}`,f.bugs.filter(b=>b.done).length)}</div>
+        ${f.bugs.length
+          ? renderTaskGroup(`bug:${f.id}`, f.bugs.filter(b=>!b.done).map(b=>taskRow(f,"bug",b)), f.bugs.filter(b=>b.done).map(b=>taskRow(f,"bug",b)))
+          : `<div class="empty">No bugs reported.</div>`}
+        ${addSlot("bug:"+f.id,"Describe a bug…","Report a bug")}
+      </section>
+    </div>
+    ${editingFeature===f.id?editFeatureModal(f):""}
+  </div>`;
+}
+
+function editFeatureModal(f){
+  return `<div class="modal-scrim" data-modalclose>
+    <div class="modal" data-modalstop>
+      <div class="modal-head"><h3>Edit feature</h3><button class="btn-ghost" data-modalclose style="padding:4px">×</button></div>
+      <div class="modal-body">
+        <label class="lbl" for="modalName">Name</label>
+        <input class="modalinput" id="modalName" value="${esc(f.name)}">
+
+        <label class="lbl" style="margin-top:var(--scale-500)">Stage</label>
+        <div class="stepper">${STAGES.map(([id,n])=>`<button data-stage-set="${f.id}:${id}" aria-pressed="${f.stage===id}">${n}</button>`).join("")}</div>
+
+        <label class="lbl" style="margin-top:var(--scale-500)">Products</label>
+        <div class="ptags">${f.products.map(p=>{const pr=productByName(p);return `<span class="ptag" style="${pillStyle(pr&&pr.color)}">
+          <span class="swatch" style="background:var(--datacolor-${pr?pr.color:"cherry"}-04)"></span>${esc(p)}
+          <button class="x" data-prodel="${f.id}:${esc(p)}" aria-label="Remove"
+            ${f.products.length<=1?'disabled title="A feature needs at least one product"':''}>×</button></span>`;}).join("")}
+          <button class="av sm ghost" data-prodpick="${f.id}" title="Add a product">+</button></div>
+        ${pickingProd===f.id?prodPickHTML(f):""}
+
+        <label class="lbl" for="modalProblem" style="margin-top:var(--scale-500)">Business problem</label>
+        <textarea class="problem modalinput" id="modalProblem">${esc(f.problem)}</textarea>
+
+        <label class="lbl" style="margin-top:var(--scale-500)">Resources</label>
+        <div class="reslist">
+          ${f.resources.map(r=>`<div class="resrow">
+            <a href="${esc(r.url)}" target="_blank" rel="noopener" class="reslink-name">${esc(r.label)}</a>
+            <span class="resurl">${esc(r.url)}</span>
+            <button class="del" data-del="resource:${f.id}:${r.id}" aria-label="Remove link" style="opacity:1">×</button>
+          </div>`).join("")||`<div class="empty" style="padding:var(--scale-200) 0">No links yet.</div>`}
+        </div>
+        ${addingResource
+          ? `<div class="addform" style="margin-top:6px">
+               <input placeholder="Label" id="resLabel" style="flex:1">
+               <input placeholder="https://…" id="resUrl" style="flex:1.4">
+               <button class="btn-secondary sm" data-resadd="${f.id}">Add</button>
+               <button class="btn-ghost" data-rescancel style="padding:4px 8px">Cancel</button>
+             </div>`
+          : `<button class="addtrigger" data-resopen><span class="plus">+</span>Add a resource link</button>`}
+
+        <div class="modal-danger">
+          <button class="btn-ghost" data-del="feat:${f.id}" style="color:var(--status-error-border);padding:0">Delete feature</button>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn-secondary" data-modalsave="${f.id}">Done</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function prodPickHTML(f){
+  const avail=PRODUCTS.filter(p=>!f.products.includes(p.name));
+  return `<div class="ptagpick">
+    ${avail.map(p=>`<button data-prodadd="${f.id}:${esc(p.name)}"><span class="swatch" style="background:var(--datacolor-${p.color}-04)"></span>${esc(p.name)}</button>`).join("")||`<span class="lbl">all products added</span>`}
+    <button class="btn-ghost" data-proddone style="padding:2px 8px">Done</button>
+  </div>`;
+}
+
+function rosterPickHTML(f){
+  const q=assignSearch.trim().toLowerCase();
+  const people=Object.keys(PEOPLE).filter(k=>PEOPLE[k].toLowerCase().includes(q));
+  return `<div class="assignpick" data-modalstop>
+    <input class="assignsearch" placeholder="Search" value="${esc(assignSearch)}" data-assignsearch autofocus>
+    <div class="assignlist">
+      ${people.map(k=>{
+        const on=f.storyRoster.includes(k);
+        const locked=on&&f.storyRoster.length<=3;
+        return `<button class="assignrow ${on?"on":""}" ${locked?'disabled title="At least 3 assignees required"':""}
+          data-rostertoggle="${f.id}:${k}"><span class="cb"></span>${esc(PEOPLE[k])}</button>`;
+      }).join("")||`<div class="empty" style="padding:var(--scale-200) 0">No matches</div>`}
+    </div>
+  </div>`;
+}
+
+function storyRow(f,s){
+  return `<div class="storyrow">
+    <button class="del" data-del="story:${f.id}:${s.id}" aria-label="Delete story" style="order:2">×</button>
+    <div class="t" style="order:1"><span class="txt" contenteditable data-edit="story:${f.id}:${s.id}">${esc(s.t)}</span></div>
+    <div class="storychecks" style="order:1">
+      ${f.storyRoster.map(k=>`<button class="chk" role="checkbox" aria-checked="${!!s.done[k]}"
+        data-tog="storydone:${f.id}:${s.id}:${k}" title="${PEOPLE[k]}" aria-label="${PEOPLE[k]} sign-off"></button>`).join("")}
+    </div>
+  </div>`;
+}
+
+function taskRow(f,key,t){
+  const tid=`${f.id}:${key}:${t.id}`;
+  return `<div class="row ${t.done?"done":""}">
+    <button class="chk" role="checkbox" aria-checked="${!!t.done}" data-tog="task:${tid}" aria-label="Toggle"></button>
+    <div class="t"><span class="txt" contenteditable data-edit="task:${tid}">${esc(t.t)}</span></div>
+    <div class="assignwrap">
+      <button class="av sm" data-taskassignpick="${tid}" title="${t.a?`Assigned to ${PEOPLE[t.a]}`:"Unassigned — click to assign"}">${t.a?ini(t.a):"?"}</button>
+      ${pickingTaskAssign===tid?taskAssignPickHTML(tid,t):""}
+    </div>
+    <button class="del" data-del="task:${tid}" aria-label="Delete">×</button>
+  </div>`;
+}
+
+function taskAssignPickHTML(tid,t){
+  const q=assignSearch.trim().toLowerCase();
+  const people=Object.keys(PEOPLE).filter(k=>PEOPLE[k].toLowerCase().includes(q));
+  return `<div class="assignpick" data-modalstop>
+    <input class="assignsearch" placeholder="Search" value="${esc(assignSearch)}" data-assignsearch autofocus>
+    <div class="assignlist">
+      ${people.map(k=>`<button class="assignrow ${k===t.a?"on":""}" data-taskassignset="${tid}:${k}">
+          <span class="cb"></span>${esc(PEOPLE[k])}
+        </button>`).join("")||`<div class="empty" style="padding:var(--scale-200) 0">No matches</div>`}
+    </div>
+  </div>`;
+}
+
+/* renders open rows, plus done rows too when that group's "show completed" toggle is on */
+function renderTaskGroup(groupId,openRows,doneRows){
+  const expanded=expandedDone.has(groupId);
+  return openRows.join("") + (expanded?doneRows.join(""):"");
+}
+/* a small header-level toggle for showing/hiding a group's completed rows */
+function doneToggle(groupId,doneCount){
+  if(!doneCount)return"";
+  const on=expandedDone.has(groupId);
+  return `<button class="showdone" data-donetoggle="${groupId}" aria-pressed="${on}">
+    <span class="chk" role="checkbox" aria-checked="${on}"></span>Show completed (${doneCount})</button>`;
+}
+
+/* products */
+function productsView(){
+  return `<div class="stack">
+    <div class="prodcards">
+      ${PRODUCTS.map(p=>{
+        const feats=F.filter(f=>f.products.includes(p.name));
+        const planned=feats.filter(f=>f.stage!=="release").length;
+        const released=feats.filter(f=>f.stage==="release");
+        const recent=released[released.length-1];
+        return `<div class="prodcard" data-openprod="${p.id}">
+          <div class="prodcard-head">
+            <div class="prodswatchwrap">
+              <button class="prodswatch" data-colorpick="${p.id}" style="background:var(--datacolor-${p.color}-04)" title="Change color"></button>
+              ${pickingColor===p.id?colorPickHTML(p):""}
+            </div>
+            <span class="txt prodname">${esc(p.name)}</span>
+          </div>
+          <div class="prodcard-stats">
+            <div class="statbox"><div class="num mono">${planned}</div><div class="lbl">Planned</div></div>
+            <div class="statbox"><div class="num mono">${released.length}</div><div class="lbl">Released</div></div>
+          </div>
+          <div class="recentbox">
+            <div class="lbl">Most recent release</div>
+            ${recent
+              ? `<button class="rname linkish" data-open="${recent.id}">${esc(recent.name)}</button>`
+              : `<div class="rname" style="color:var(--text-tertiary)">Nothing released yet</div>`}
+          </div>
+        </div>`;}).join("")}
+    </div>
+    ${addingKey==="newproduct:"?addSlot("newproduct:","Product name…","Add a product"):""}
+  </div>`;
+}
+function colorPickHTML(p){
+  return `<div class="colorpick">${DATACOLORS.map(c=>`<button class="colorswatch ${c===p.color?"on":""}"
+    data-colorset="${p.id}:${c}" style="background:var(--datacolor-${c}-04)" title="${c}"></button>`).join("")}</div>`;
+}
+
+/* product detail — every feature tagged to this product, grouped by stage, linked straight through */
+function productPage(p){
+  const feats=F.filter(f=>f.products.includes(p.name));
+  return `<div class="fpage">
+    <section class="fhead">
+      <div class="fhead-top">
+        <div class="prodpage-head" style="margin-bottom:0">
+          <button class="prodswatch" style="background:var(--datacolor-${p.color}-04)" disabled></button>
+          <h2 class="ftitle">${esc(p.name)}</h2>
+        </div>
+        <button class="btn-secondary sm" data-editprod="${p.id}">Edit</button>
+      </div>
+    </section>
+    <div class="stack">
+      ${STAGES.map(([id,name])=>{
+        const list=feats.filter(f=>f.stage===id);
+        if(!list.length)return"";
+        return `<section class="panel">
+          <div class="phead"><span class="dot" style="background:${STAGE_COLOR[id]}"></span><h3>${name}</h3><span class="lbl c">${list.length}</span></div>
+          <div class="prodpage-list">
+            ${list.map(f=>`<button class="prodpage-feat" data-open="${f.id}">
+                <span class="name">${esc(f.name)}</span>
+              </button>`).join("")}
+          </div>
+        </section>`;
+      }).join("")}
+      ${feats.length?"":`<section class="panel"><div class="empty">No features tagged with this product yet.</div></section>`}
+    </div>
+    ${editingProduct===p.id?editProductModal(p):""}
+  </div>`;
+}
+
+function editProductModal(p){
+  const inUse=F.some(f=>f.products.includes(p.name));
+  return `<div class="modal-scrim" data-modalclose>
+    <div class="modal" data-modalstop>
+      <div class="modal-head"><h3>Edit product</h3><button class="btn-ghost" data-modalclose style="padding:4px">×</button></div>
+      <div class="modal-body">
+        <label class="lbl" for="modalProdName">Name</label>
+        <input class="modalinput" id="modalProdName" value="${esc(p.name)}">
+
+        <label class="lbl" style="margin-top:var(--scale-500)">Color</label>
+        <div class="colorpick" style="position:static;padding:0;border:none;box-shadow:none">
+          ${DATACOLORS.map(c=>`<button class="colorswatch ${c===p.color?"on":""}"
+            data-colorset="${p.id}:${c}" style="background:var(--datacolor-${c}-04)" title="${c}"></button>`).join("")}
+        </div>
+
+        <div class="modal-danger">
+          <button class="btn-ghost" data-del="product:${p.id}" style="color:var(--status-error-border);padding:0"
+            ${inUse?'disabled title="Remove this product from every feature first"':''}>Delete product</button>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn-secondary" data-modalsave>Done</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* my tasks — same order as the feature board, but backward: closest-to-done stages surface first.
+   Release is the "completed" stage, so anything in it is hidden here entirely. */
+const MINE_STAGE_ORDER=["test","dev","design","backlog"];
+const MINE_GROUPS=[
+  {kind:"proto",title:"Design",addable:true,placeholder:"Describe a design task…"},
+  {kind:"story",title:"User Stories",addable:true,placeholder:"As a … I can …"},
+  {kind:"bug",title:"Bugs",addable:true,placeholder:"Describe a bug…"},
+];
+/* my tasks — one card per feature you have work on, with a Design / User Stories / Bugs
+   sub-list inside each, closest-to-shipping features first. Release-stage features are done,
+   so they're left off this list. */
+function myTasks(){
+  const w=myWork().filter(x=>x.f.stage!=="release");
+  const feats=F.filter(f=>f.stage!=="release"&&w.some(x=>x.f.id===f.id))
+    .sort((a,b)=>MINE_STAGE_ORDER.indexOf(a.stage)-MINE_STAGE_ORDER.indexOf(b.stage)||F.indexOf(a)-F.indexOf(b));
+  return `<div class="stack">
+    ${feats.map(f=>{
+      const items=w.filter(x=>x.f.id===f.id);
+      const groupId=`mine:${f.id}`;
+      const totalDone=items.filter(x=>isDone(f,x.kind,x.item)).length;
+      return `<section class="panel">
+      <div class="phead"><h3>${esc(f.name)}</h3>
+        <span class="lbl" style="display:flex;align-items:center;gap:6px"><span class="dot" style="background:${STAGE_COLOR[f.stage]}"></span>${stageName(f.stage)}</span>
+        ${doneToggle(groupId,totalDone)}</div>
+      ${MINE_GROUPS.map(g=>{
+        const list=items.filter(x=>x.kind===g.kind);
+        if(!list.length&&!g.addable)return"";
+        const rowHTML=x=>`<div class="row ${isDone(f,x.kind,x.item)?"done":""}">
+          <button class="chk" role="checkbox" aria-checked="${isDone(f,x.kind,x.item)}" aria-label="Toggle"
+            data-tog="${x.kind==="story"?`storydone:${f.id}:${x.item.id}:${ME}`:`task:${f.id}:${x.kind}:${x.item.id}`}"></button>
+          <div class="t"><span class="txt" contenteditable data-edit="${x.kind==="story"?`story:${f.id}:${x.item.id}`:`task:${f.id}:${x.kind}:${x.item.id}`}">${esc(x.item.t)}</span></div>
+          <button class="del" data-del="${x.kind==="story"?`story:${f.id}:${x.item.id}`:`task:${f.id}:${x.kind}:${x.item.id}`}" aria-label="Delete">×</button>
+        </div>`;
+        const open=list.filter(x=>!isDone(f,x.kind,x.item)).map(rowHTML);
+        const done=list.filter(x=>isDone(f,x.kind,x.item)).map(rowHTML);
+        return `<div class="tasksub">
+          <div class="tasksub-head"><span class="lbl">${g.title}</span>
+            ${g.addable?mineAddTrigger(g.kind,f.id):""}
+          </div>
+          ${list.length?renderTaskGroup(groupId,open,done):""}
+          ${g.addable?mineAddForm(g.kind,f.id,g.placeholder):""}
+        </div>`;
+      }).join("")}
+    </section>`;}).join("")}
+    ${feats.length?"":`<section class="panel"><div class="empty">Nothing assigned to you right now.</div></section>`}
+  </div>`;
+}
+
+/* ── interaction ───────────────────────────────────────────── */
+function findTask(fid,key,tid){return feat(fid)[key].find(t=>t.id===tid)}
+
+function wire(){
+  document.querySelectorAll("[data-open]").forEach(el=>el.onclick=e=>{e.preventDefault();openId=el.dataset.open;openProduct=null;editingProduct=null;addingKey=null;editingFeature=null;addingResource=false;window.scrollTo(0,0);render();});
+
+  document.querySelectorAll("[data-openprod]").forEach(el=>el.onclick=e=>{
+    if(e.target.closest('button,select,.colorpick'))return;
+    openProduct=el.dataset.openprod;addingKey=null;window.scrollTo(0,0);render();});
+
+  document.querySelectorAll("[data-editprod]").forEach(el=>el.onclick=()=>{editingProduct=el.dataset.editprod;render();});
+
+  document.querySelectorAll("[data-tog]").forEach(el=>el.onclick=e=>{
+    e.stopPropagation();const[a,...r]=el.dataset.tog.split(":");
+    if(a==="storydone"){const s=feat(r[0]).stories.find(s=>s.id===r[1]);s.done[r[2]]=s.done[r[2]]?0:1;}
+    else if(a==="task"){const t=findTask(r[0],r[1],r[2]);t.done=!t.done;}
+    render();});
+
+  document.querySelectorAll("[data-stage-set]").forEach(el=>el.onclick=()=>{
+    const[fid,sid]=el.dataset.stageSet.split(":");feat(fid).stage=sid;render();});
+
+  /* per-task assignee popover */
+  document.querySelectorAll("[data-taskassignpick]").forEach(el=>el.onclick=e=>{
+    e.stopPropagation();const tid=el.dataset.taskassignpick;
+    pickingTaskAssign=pickingTaskAssign===tid?null:tid;assignSearch="";render();
+    requestAnimationFrame(()=>{const i=document.querySelector('[data-assignsearch]');if(i){i.focus();}});});
+  document.querySelectorAll("[data-taskassignset]").forEach(el=>el.onclick=e=>{
+    e.stopPropagation();const[fid,key,taskId,person]=el.dataset.taskassignset.split(":");
+    findTask(fid,key,taskId).a=person;pickingTaskAssign=null;assignSearch="";render();});
+  document.querySelectorAll("[data-assignsearch]").forEach(el=>{
+    el.addEventListener("click",e=>e.stopPropagation());
+    el.addEventListener("input",()=>{assignSearch=el.value;render();
+      requestAnimationFrame(()=>{const i=document.querySelector('[data-assignsearch]');if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length);}});});
+  });
+
+  document.querySelectorAll("[data-edit]").forEach(el=>{
+    const save=()=>{const v=el.textContent.trim();
+      const[a,...r]=el.dataset.edit.split(":");
+      if(a==="feat")feat(r[0])[r[1]]=v;
+      else if(a==="story")feat(r[0]).stories.find(s=>s.id===r[1]).t=v;
+      else if(a==="task")findTask(r[0],r[1],r[2]).t=v;};
+    el.addEventListener("blur",save);
+    el.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();el.blur();}});});
+
+  /* edit-feature modal */
+  document.querySelectorAll("[data-editfeat]").forEach(el=>el.onclick=()=>{editingFeature=el.dataset.editfeat;addingResource=false;render();});
+  const closeModal=()=>{
+    if(editingFeature){const f=feat(editingFeature);
+      if(f){const n=$("#modalName"),p=$("#modalProblem");
+        if(n)f.name=n.value.trim()||f.name; if(p)f.problem=p.value.trim();}}
+    if(editingProduct){const p=PRODUCTS.find(p=>p.id===editingProduct);
+      if(p){const n=$("#modalProdName"),v=n&&n.value.trim();
+        if(v&&v!==p.name){const old=p.name;p.name=v;F.forEach(f=>{f.products=f.products.map(x=>x===old?v:x);});}}}
+    editingFeature=null;editingProduct=null;addingResource=false;render();};
+  document.querySelectorAll("[data-modalclose]").forEach(el=>el.onclick=closeModal);
+  document.querySelectorAll("[data-modalsave]").forEach(el=>el.onclick=closeModal);
+  document.querySelectorAll("[data-modalstop]").forEach(el=>el.onclick=e=>e.stopPropagation());
+
+  document.querySelectorAll("[data-resopen]").forEach(el=>el.onclick=()=>{addingResource=true;render();
+    requestAnimationFrame(()=>{const l=$("#resLabel");if(l)l.focus();});});
+  document.querySelectorAll("[data-rescancel]").forEach(el=>el.onclick=()=>{addingResource=false;render();});
+  document.querySelectorAll("[data-resadd]").forEach(el=>el.onclick=()=>{
+    const fid=el.dataset.resadd,l=$("#resLabel"),u=$("#resUrl");
+    const label=(l&&l.value||"").trim(),url=(u&&u.value||"").trim();
+    if(!label||!url)return;
+    feat(fid).resources.push({id:uid("r"),label,url});
+    addingResource=false;render();});
+
+  document.querySelectorAll("[data-del]").forEach(el=>el.onclick=e=>{
+    e.stopPropagation();const[a,...r]=el.dataset.del.split(":");
+    if(a==="feat"){F=F.filter(f=>f.id!==r[0]);openId=null;editingFeature=null;}
+    else if(a==="resource"){const f=feat(r[0]);f.resources=f.resources.filter(x=>x.id!==r[1]);}
+    else if(a==="story"){const f=feat(r[0]);f.stories=f.stories.filter(s=>s.id!==r[1]);}
+    else if(a==="task"){const f=feat(r[0]);f[r[1]]=f[r[1]].filter(t=>t.id!==r[2]);}
+    else if(a==="product"){
+      if(F.some(f=>f.products.includes((PRODUCTS.find(p=>p.id===r[0])||{}).name)))return;
+      PRODUCTS=PRODUCTS.filter(p=>p.id!==r[0]);
+      if(openProduct===r[0])openProduct=null;
+      if(editingProduct===r[0])editingProduct=null;}
+    render();});
+
+  document.querySelectorAll("[data-colorpick]").forEach(el=>el.onclick=e=>{
+    e.stopPropagation();pickingColor=pickingColor===el.dataset.colorpick?null:el.dataset.colorpick;render();});
+  document.querySelectorAll("[data-colorset]").forEach(el=>el.onclick=e=>{
+    e.stopPropagation();const[pid,c]=el.dataset.colorset.split(":");
+    const p=PRODUCTS.find(p=>p.id===pid);if(p)p.color=c;pickingColor=null;render();});
+
+  document.querySelectorAll("[data-donetoggle]").forEach(el=>el.onclick=()=>{
+    const id=el.dataset.donetoggle;
+    if(expandedDone.has(id))expandedDone.delete(id);else expandedDone.add(id);
+    render();});
+
+  /* roster (shared assignee list for the whole stories section) — same search/checklist popover as task assignees */
+  document.querySelectorAll("[data-rosterpick]").forEach(el=>el.onclick=e=>{
+    e.stopPropagation();const fid=el.dataset.rosterpick;
+    pickingRoster=pickingRoster===fid?null:fid;assignSearch="";render();
+    requestAnimationFrame(()=>{const i=document.querySelector('[data-assignsearch]');if(i)i.focus();});});
+  document.querySelectorAll("[data-rostertoggle]").forEach(el=>el.onclick=e=>{
+    e.stopPropagation();const[fid,k]=el.dataset.rostertoggle.split(":");const f=feat(fid);
+    if(f.storyRoster.includes(k)){
+      if(f.storyRoster.length<=3)return;
+      f.storyRoster=f.storyRoster.filter(x=>x!==k);
+      f.stories.forEach(s=>delete s.done[k]);
+    }else{
+      f.storyRoster.push(k);f.stories.forEach(s=>s.done[k]=0);
+    }
+    render();
+    requestAnimationFrame(()=>{const i=document.querySelector('[data-assignsearch]');if(i)i.focus();});});
+
+  /* products (a feature can belong to more than one) */
+  document.querySelectorAll("[data-prodpick]").forEach(el=>el.onclick=()=>{
+    pickingProd=pickingProd===el.dataset.prodpick?null:el.dataset.prodpick;render();});
+  document.querySelectorAll("[data-prodadd]").forEach(el=>el.onclick=()=>{
+    const[fid,p]=el.dataset.prodadd.split(":");feat(fid).products.push(p);render();});
+  document.querySelectorAll("[data-prodel]").forEach(el=>el.onclick=()=>{
+    const[fid,p]=el.dataset.prodel.split(":");const f=feat(fid);
+    if(f.products.length<=1)return; f.products=f.products.filter(x=>x!==p);render();});
+  document.querySelectorAll("[data-proddone]").forEach(el=>el.onclick=()=>{pickingProd=null;render();});
+
+  /* click-to-add: open → type → save/cancel */
+  document.querySelectorAll("[data-addopen]").forEach(el=>el.onclick=()=>{addingKey=el.dataset.addopen;render();
+    requestAnimationFrame(()=>{const i=document.querySelector(`[data-addinput="${CSS.escape(addingKey)}"]`);i&&i.focus();});});
+  document.querySelectorAll("[data-addcancel]").forEach(el=>el.onclick=()=>{addingKey=null;render();});
+  const commitAdd=key=>{
+    const inp=document.querySelector(`[data-addinput="${CSS.escape(key)}"]`);
+    const val=(inp.value!==undefined?inp.value:inp.textContent).trim();
+    if(!val){addingKey=null;render();return;}
+    if(key.startsWith("mineadd:")){
+      const[,kind,fid]=key.split(":");const f=feat(fid);
+      if(f){
+        if(kind==="bug")f.bugs.push({id:uid("b"),cat:"Untriaged",t:val,a:ME});
+        else if(kind==="proto")f.proto.push({id:uid("p"),cat:"",t:val,a:ME});
+        else if(kind==="story"){
+          if(!f.storyRoster.includes(ME))f.storyRoster.push(ME);
+          const d={};f.storyRoster.forEach(k=>d[k]=0);
+          f.stories.push({id:uid("u"),cat:"New",t:val,done:d});
+        }
+      }
+      addingKey=null;render();return;
+    }
+    const[a,fid]=key.split(":");
+    if(a==="problem")feat(fid).problem=val;
+    else if(a==="newproduct"){
+      const used=PRODUCTS.map(p=>p.color);
+      const color=DATACOLORS.find(c=>!used.includes(c))||DATACOLORS[PRODUCTS.length%DATACOLORS.length];
+      PRODUCTS.push({id:uid("pr"),name:val,color});}
+    else{const f=feat(fid);
+      if(a==="story"){const d={};f.storyRoster.forEach(k=>d[k]=0);f.stories.push({id:uid("u"),cat:"New",t:val,done:d});}
+      else if(a==="bug")f.bugs.push({id:uid("b"),cat:"Untriaged",t:val,a:ME});
+      else if(a==="proto")f.proto.push({id:uid("p"),cat:"",t:val,a:ME});}
+    addingKey=null;render();};
+  document.querySelectorAll("[data-addsave]").forEach(el=>el.onclick=()=>commitAdd(el.dataset.addsave));
+  document.querySelectorAll("[data-addinput]").forEach(el=>{
+    if(el.tagName==="INPUT")el.addEventListener("keydown",e=>{
+      if(e.key==="Enter"){e.preventDefault();commitAdd(el.dataset.addinput);}
+      else if(e.key==="Escape"){addingKey=null;render();}});
+    if(el.tagName==="TEXTAREA")el.addEventListener("keydown",e=>{if(e.key==="Escape"){addingKey=null;render();}});
+  });
+
+  document.querySelectorAll("[data-newfeat]").forEach(el=>el.onclick=()=>newFeature(el.dataset.newfeat));
+
+  /* drag between stages */
+  let drag=null;
+  document.querySelectorAll(".card").forEach(c=>{
+    c.addEventListener("dragstart",e=>{drag=c.dataset.open;c.classList.add("dragging");e.dataTransfer.effectAllowed="move";});
+    c.addEventListener("dragend",()=>{c.classList.remove("dragging");drag=null;});});
+  document.querySelectorAll(".col").forEach(col=>{
+    col.addEventListener("dragover",e=>{e.preventDefault();col.classList.add("drop");});
+    col.addEventListener("dragleave",()=>col.classList.remove("drop"));
+    col.addEventListener("drop",e=>{e.preventDefault();col.classList.remove("drop");
+      if(drag){feat(drag).stage=col.dataset.stage;drag=null;render();}});});
+}
+
+function newFeature(stage){
+  const f={id:uid("f"),products:[PRODUCTS[0].name],name:"Untitled feature",
+    stage:stage||"backlog",problem:"",resources:[],storyRoster:["hp","jr","am"],stories:[],bugs:[],proto:[]};
+  F.push(f);openId=f.id;openProduct=null;editingProduct=null;editingFeature=f.id;render();
+  const n=$("#modalName");if(n){n.focus();n.select();}
+}
+
+$("#nav").onclick=e=>{const b=e.target.closest("button");if(b){openId=null;openProduct=null;editingProduct=null;addingKey=null;editingFeature=null;addingResource=false;view=b.dataset.v;render();}};
+$("#addFeature").onclick=()=>newFeature("backlog");
+$("#addProduct").onclick=()=>{
+  openId=null;openProduct=null;editingProduct=null;view="products";addingKey="newproduct:";render();
+  requestAnimationFrame(()=>{const i=document.querySelector('[data-addinput="newproduct:"]');i&&i.focus();});
+};
+render();
+</script>
+</body>
+</html>
